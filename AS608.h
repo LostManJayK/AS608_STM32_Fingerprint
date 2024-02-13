@@ -42,7 +42,9 @@
 #define FLASH_WRITE_ERR 0x18 //Error writing flash memory
 #define UNDEF_ERR 0x19 //No definition error
 #define INVALID_REG 0x1A//Invalid register number
-#define INVALID_REG_CONFIG //Incorrect register configuration
+#define INVALID_REG_CONFIG 0x1B//Incorrect register configuration
+#define INVALID_PAGE_NUM 0x1C //Wrong page number
+#define COM_ERR 0x1D //Failed to operate communication port
 
 
 //Function for sending package to module
