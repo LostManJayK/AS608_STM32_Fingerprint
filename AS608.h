@@ -17,7 +17,7 @@
 #define PID_ENDDATA 0x08 //End data packet
 
 //Function for sending package
-void sendDataPackage(uint8_t*, unsigned int)
+void sendDataPackage(uint8_t*, uint8_t size)
 
 
 #endif
