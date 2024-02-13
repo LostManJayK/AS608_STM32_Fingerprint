@@ -18,6 +18,50 @@
 
 //----
 
+//Define BAUD rate identifiers
+//----
+
+#define BAUD_PARAM 0x04 //Parameter number for BAUD rate setting
+
+#define BAUD_9600 0x01
+#define BAUD_19200 0x02
+#define BAUD_28800 0x03
+#define BAUD_38400 0x04
+#define BAUD_48000 0x05
+#define BAUD_57600 0x06
+#define BAUD_67200 0x07
+#define BAUD_76800 0x08
+#define BAUD_86400 0x09
+#define BAUD_96000 0x0A
+#define BAUD_105600 0x0B
+#define BAUD_115200 0x0C
+
+//----
+
+//Define security level identifiers
+//----
+
+#define SECLVL_PARAM 0x05 //Paramaeter number for security level
+
+#define SECLVL_1 0x01
+#define SECLVL_2 0x02
+#define SECLVL_3 0x03
+#define SECLVL_4 0x04
+#define SECLVL_5 0x05
+
+//----
+
+//Define package length identifiers. Format is PACLEN_<NUM_BYTES>. This value is a system parameter determining the max allowable data transfer length
+//----
+
+#define PACLEN_32 0x00
+#define PACLEN_64 0x01
+#define PACLEN_128 0x02
+#define PACLEN_256 0x03
+
+//----
+
+
 //Define confirmation codes for AS608 acknowledgement packages. Each code is one byte. Refer to the datasheet for additional info
 //----
 
@@ -84,10 +128,33 @@
 #define READ_NOTEPAD 0x19 //REad from specified page
 
 
+//Define a data structure for the fingerprint module parameters
+struct FingerprintModule
+{
+    uint8_t[4] address;
+    uint8_t baud_rate;
+    uint8_t security_level;
+    uint8_t max_data_length;
+}
+
+
+//Define a data structure for data packages
+struct DataPackage
+{
+    uint8_t[2] header;
+    uint8_t[4] address;
+
+}
+
+
+//initializer for fingerprint module
+void fpInit();
+
+
 //Function for sending package to module
 void sendDataPackage(uint8_t*, uint8_t size);
 
-//
+//Function
 
 
 #endif
