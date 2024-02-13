@@ -1,7 +1,7 @@
 #include "AS608.h"
 
 //Function for sending package to module
-void sendDataPackage(uint8_t*, uint8_t size)
+void sendDataPackage(DataPackage data, uint8_t size)
 {
     
 }
