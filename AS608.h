@@ -134,16 +134,19 @@ struct FingerprintModule
     uint8_t[4] address;
     uint8_t baud_rate;
     uint8_t security_level;
-    uint8_t max_data_length;
+    uint8_t max_len; //max data package length
 }
 
 
 //Define a data structure for data packages
 struct DataPackage
 {
-    uint8_t[2] header;
-    uint8_t[4] address;
-
+    uint8_t header[2];
+    uint8_t address[4];
+    uint8_t pid[1];
+    uint8_t len_data[2]; //lenfth of data package
+    uint8_t* data; //Core information to be transfered
+    uint8_t checksum[2];
 }
 
 
