@@ -1,8 +1,6 @@
 #ifndef AS608_H
 #define AS608_H
 
-//Define macros for fingerprint sensor as given in datasheet
-
 //Define fingerprint sensor instruction header. This will not change
 #define AS608_INSTR_HEADER 0xEF, 0X01
 
@@ -12,13 +10,17 @@
 
 //Define package identifiers (PIDs) for sensor packages
 //----
+
 #define PID_COMMAND 0x01 //Command
 #define PID_DATA 0x02 //Data packet
 #define PID_ACK 0x07 //Acknowledge
 #define PID_ENDDATA 0x08 //End data packet
 
+//----
+
 //Define confirmation codes for AS608 acknowledgement packages. Each code is one byte. Refer to the datasheet for additional info
 //----
+
 #define COMPLETE 0x00 //Command execution complete
 #define REC_ERR 0x01 //Error receiving package
 #define NO_FINGER 0x02 //No fingerprint on sensor
@@ -45,6 +47,41 @@
 #define INVALID_REG_CONFIG 0x1B//Incorrect register configuration
 #define INVALID_PAGE_NUM 0x1C //Wrong page number
 #define COM_ERR 0x1D //Failed to operate communication port
+//----
+
+//Define instruction codes
+//----
+
+//System Related
+
+#define HANDSHAKE 0x17 //Handshake to test communication with module
+#define SET_ADDR 0x15 //Set device address
+#define SET_PARAM 0x0E //Set system parameter
+#define GET_PARAM 0x1F //Read system parameter
+#define GET_TEMPLATENUM 0x1D //REad current valid template number
+
+//Fingerprint Processing
+
+#define GEN_IMG 0x01 //Detect fingerprint and store fingerprint image
+#define UP_IMG 0x0A //Upload fingerprint in buffer to computer
+#define DL_IMG 0x0B //Download fingerprint image form computer
+#define IMG_TO_CHAR 0x02 //Generate character file from image 
+#define GEN_TMPLT 0x05 //generate a template form character buffer info
+#define UP_CHAR 0x08 //Upload character file or template
+#define DL_CHAR 0x09 //Download character file
+#define STR_TMPLT 0x06 //Store buffer contents to flash memory
+#define GET_TMPLT 0x07 //Read template from PageID in flash memeory
+#define DEL_TMPLT 0x0C //Delete template from flash memory
+#define PURGE_LIB 0x0D //Delete all templates in the fingerprint library
+#define MATCH_TMPLT 0x03 //Match two templates
+#define SEARCH 0x04 //Search for a matching template in libraray
+
+
+//Other
+
+#define GET_RNG 0x14 //Generate a random number
+#define WRITE_NOTEPAD 0x18 //Write to specified page
+#define READ_NOTEPAD 0x19 //REad from specified page
 
 
 //Function for sending package to module
