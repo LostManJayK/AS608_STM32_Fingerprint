@@ -41,6 +41,7 @@
 #define FLASH_ACR_LATENCY 0b001 //Set flash latency
 
 
+void clockConfig();
 
 
 

@@ -26,9 +26,4 @@ void clockConfig()
     //Set clock source
     *(rcc_ptr + RCC_CFGR) |= (RCC_CFGR_SW);
     *(rcc_ptr + RCC_CFGR) |= (RCC_CFGR_SWS);
-    
-
-
-
-
 }
