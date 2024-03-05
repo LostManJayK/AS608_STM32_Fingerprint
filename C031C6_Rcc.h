@@ -19,6 +19,10 @@
 #define RCC_APBENR2 0x40
 #define RCC_APBENR2_USART1EN 0x8000
 
+//RCC_AHBENR Advanced High-Performance Bus Enable Register
+#define RCC_AHBENR 0x38
+#define RCC_AHBENR_DMA1EN 0b1
+
 //RCC_ICSCR RCC Internal Clock Source Calibration Register
 #define RC_ICSCR 0x04 //Offset
 #define RCC_ICSCR_HSICAL 0x40 //Set HSI Calibration value ot 64

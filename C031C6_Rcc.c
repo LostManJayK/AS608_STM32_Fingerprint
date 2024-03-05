@@ -13,6 +13,9 @@ void clockConfig()
     //Set Advaned Peripheral Bus Power Enable bit to on
     *(rcc_ptr + RCC_ABPENR1) |= (RCC_APBENR1_PWREN);
 
+    //Set Advanced High-Performance Bus DMA1 Enable to on
+    *(rcc_ptr + RCC_AHBENR) |= (RCC_AHBENR_DMA1EN);
+
     //Configure flash prefetch and latency settings, enable instruction cache
     volatile unsigned int* flash_ptr = (unsigned int*)FLASH;
 

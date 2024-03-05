@@ -13,14 +13,14 @@
 #define DMA_CCRx_TCIE 0b10 //Enable transfer complete interupts
 #define DMA_CCRx_HTIE 0b100 //Enable half transfer interrupt
 #define DMA_CCRx_TEIE 0x8 //Enable transfer error interrupt
-#define DMA_CCRx_DIR 0x00 //Set data direction to read from peripheral
+#define DMA_CCRx_DIR 0x10 //Set data direction to read from peripheral
 #define DMA_CCRx_CIRC 0x20 //Enable circular mode
-#define DMA_CCRx_PINC 0x00 //Peripheral increment disabled
+#define DMA_CCRx_PINC 0x40 //Peripheral increment disabled
 #define DMA_CCRx_MINC 0x80 //Memory increment enabled
-#define DMA_CCRx_PSIZE (0b00 << 8) //Set peripheral size to 8 bits
-#define DMA_CCRx_MSIZE (0b00 << 10) //Set memory size to 8 bits
-#define DMA_CCRx_PL (0b00 << 12) // Set channel priority level to low
-#define DMA_CCRx_MEM2MEM (0b0 << 14) //Disable memory to memory mode
+#define DMA_CCRx_PSIZE (0b11 << 8) //Set peripheral size
+#define DMA_CCRx_MSIZE (0b11 << 10) //Set memory size
+#define DMA_CCRx_PL (0b11 << 12) // Set channel priority level to low
+#define DMA_CCRx_MEM2MEM (0b1 << 14) //Set memory to memory mode
 
 //DMA_CNDTRx
 #define DMA_CNDTRx_RST 0x00000000
@@ -33,7 +33,9 @@
 #define DMA_CMAR3 (0x14 + 0x28) //Memory address register
 
 
-
+//Functions
+void DMAInit(); //Initialization for DMA
+void DMAConfig(uint32_t periphAddr, uint32_t memAddr, uint32_t dataSize); //Configuration for DMA
 
 
 #endif
