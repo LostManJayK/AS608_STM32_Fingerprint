@@ -2,7 +2,7 @@
 #include "C031C6_Rcc.h"
 
 //This functions performs basic initialization for the DMA1 channel 3
-void DMAInit3()
+void DMA1_Init3()
 {
     uint32_t *dma_ptr = (uint32_t*)DMA; //Define pointer for direct memory access base address
     uint32_t *rcc_ptr = (uint32_t*)RCC; //Define pointer for Clock control register base addess
@@ -22,17 +22,26 @@ void DMAInit3()
 }
 
 //This function performs application specific config for the DMA
-void DMAConfig(uint32_t periphAddr, uint32_t memAddr, uint32_t dataSize)
+void DMA1_Config3(uint32_t periphAddr, uint32_t memAddr, uint32_t dataSize)
 {
     uint32_t *dma_ptr = (uint32_t*)DMA;
 
     *(dma_ptr + DMA_CNDTR3) |= datasize; //Set data transfer size
-
     *(dma_ptr + DMA_CPAR3) |= periphAddr; //Set peripheral address
-
     *(dma_ptr + DMA_CMAR3) |= memAddr; //Set memory address
-
     *(dma_ptr + DMA_CCR3) |= 0b1; //Enable DMA1 Channel 3
+}
+
+
+//This function handles interrupts for the DMA1 Channel 3
+void DMA1_IRQHandler3()
+{
+    uint32_t *dma_ptr = (uint32_t*)DMA;
+
+    if (*(dma_ptr + DMA_ISR) & DMA_ISR_TEIF3)
+    {
+        
+    }
 }
 
 

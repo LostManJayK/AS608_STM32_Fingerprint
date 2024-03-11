@@ -29,10 +29,17 @@
 
 //RCC_CFGR RCC Configure Register
 #define RCC_CFGR 0x08
-#define RCC_CFGR_HPRE 0x0 //AHB Prescaler set to 1
-#define RCC_CFGR_PPRE 0x0 //APB Prescaler set to 1
+#define RCC_CFGR_HPRE (0b0000<< 8) //AHB Prescaler
+#define RCC_CFGR_PPRE (0b000 << 12) //APB Prescaler
 #define RCC_CFGR_SW 0b001 //System clock switch set to HSE
 #define RCC_CFGR_SWS 0b001 //System clock switch status to detect HSE ready
+
+//RCC_IOPENR RCC I/O port clock enable register
+#define RCC_IOPENR 0x34 //RCC_IOPENR Offset
+#define RCC_IOPENR_RST 0x00000000 //RCC_IOPENR Reset
+
+#define RCC_IOPENR_GPIOAEN 0b1 //Enable GPIOA clock
+#define RCC_IOPENR_GPIOBEN 0b10 //Enable GPIOB clock
 
 //FLASH--------------------------------------------------------------------------------------------
 #define FLASH 0x40022000
