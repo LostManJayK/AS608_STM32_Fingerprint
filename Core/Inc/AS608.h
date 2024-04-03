@@ -1,6 +1,9 @@
 #ifndef AS608_H
 #define AS608_H
 
+#include <stdint.h>
+#include <stdio.h>
+
 //Define fingerprint sensor instruction header. This will not change
 #define AS608_INSTR_HEADER 0xEF, 0X01
 
@@ -37,6 +40,7 @@
 #define BAUD_115200 0x0C
 
 //----
+
 
 //Define security level identifiers
 //----
@@ -131,15 +135,15 @@
 //Define a data structure for the fingerprint module parameters
 struct FingerprintModule
 {
-    uint8_t[4] address;
+    uint8_t address[4];
     uint8_t baud_rate;
     uint8_t security_level;
     uint8_t max_len; //max data package length
-}
+};
 
 
 //Define a data structure for data packages
-struct DataPackage
+typedef struct DataPackage
 {
     uint8_t header[2];
     uint8_t address[4];
@@ -147,7 +151,7 @@ struct DataPackage
     uint8_t len_data[2]; //lenfth of data package
     uint8_t* data; //Core information to be transfered
     uint8_t checksum[2];
-}
+} DataPackage;
 
 
 //initializer for fingerprint module
@@ -155,7 +159,7 @@ void fpInit();
 
 
 //Function for sending package to module
-void sendDataPackage(uint8_t*, uint8_t size);
+void sendDataPackage(DataPackage*, uint8_t size);
 
 //Function
 

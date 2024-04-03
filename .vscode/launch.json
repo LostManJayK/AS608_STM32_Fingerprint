@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "configurations": [
+		{
+			"name": "Debug with OpenOCD",
+			"cwd": "${workspaceFolder}",
+			"executable": "./as608_test.elf",
+			"request": "launch",
+			"type": "cortex-debug",
+			"runToEntryPoint": "main",
+			"servertype": "openocd",
+			"configFiles": [
+				"/home/andrew/Documents/Dev/Embedded/Setup/openocd/openocd/scripts/interface/stlink.cfg",
+				"/home/andrew/Documents/Dev/Embedded/Setup/openocd/openocd/scripts/target/stm32c0x.cfg"
+			],
+			"showDevDebugOutput": "raw",
+			"searchDir": []
+		},
+
+	]
+}

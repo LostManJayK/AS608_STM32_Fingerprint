@@ -1,6 +1,7 @@
 #ifndef STM32_DMA_H
 #define STM32_DMA_H
 
+#include <stdint.h>
 
 //DMA1
 #define DMA 0x40020000 //DMA1 base address
