@@ -2,7 +2,6 @@
 #define AS608_H
 
 #include <stdint.h>
-#include <stdio.h>
 
 //Define fingerprint sensor instruction header. This will not change
 #define AS608_INSTR_HEADER 0xEF, 0X01
@@ -124,6 +123,12 @@
 #define MATCH_TMPLT 0x03 //Match two templates
 #define SEARCH 0x04 //Search for a matching template in libraray
 
+//Define package and data lengths in bytes
+#define HANDSHAKE_PKG_LEN 0x00, 0x04
+#define HANDSHAKE_DATA_LEN 1
+
+//Define data package attribute base size
+#define DATAPKG_BASE_SIZE 12
 
 //Other
 
@@ -133,13 +138,14 @@
 
 
 //Define a data structure for the fingerprint module parameters
-struct FingerprintModule
+typedef struct FingerprintModule
 {
     uint8_t address[4];
     uint8_t baud_rate;
-    uint8_t security_level;
+    uint8_t security_lev1el;
     uint8_t max_len; //max data package length
-};
+
+}FingerprintModule;
 
 
 //Define a data structure for data packages
@@ -147,21 +153,33 @@ typedef struct DataPackage
 {
     uint8_t header[2];
     uint8_t address[4];
-    uint8_t pid[1];
-    uint8_t len_data[2]; //lenfth of data package
+    uint8_t pid;
+    uint8_t len_pkg[2]; //length of data package
+    uint8_t instr_code;
     uint8_t* data; //Core information to be transfered
+    unsigned len_data;
     uint8_t checksum[2];
-} DataPackage;
+}DataPackage;
 
 
 //initializer for fingerprint module
 void fpInit();
 
+//Get DataPackage elements
+uint8_t getDataPkgElement(DataPackage*, uint8_t);
+
+//Calculates the checksum for the data package
+uint8_t calculateChecksum(DataPackage*);
+
+//Calculate the size in bytes of the data package
+unsigned calculatePkgSize(DataPackage*);
+
 
 //Function for sending package to module
 void sendDataPackage(DataPackage*, uint8_t size);
 
-//Function
+//Function for sending handshake message
+uint8_t sendHandshake(FingerprintModule&);
 
 
 #endif
