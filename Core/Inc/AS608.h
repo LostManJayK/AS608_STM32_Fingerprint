@@ -124,8 +124,12 @@
 #define SEARCH 0x04 //Search for a matching template in libraray
 
 //Define package and data lengths in bytes
+//---
+
+//handshake
 #define HANDSHAKE_PKG_LEN 0x00, 0x04
 #define HANDSHAKE_DATA_LEN 1
+#define HANDSHAKE_REPLY_LEN 12
 
 //Define data package attribute base size
 #define DATAPKG_BASE_SIZE 12

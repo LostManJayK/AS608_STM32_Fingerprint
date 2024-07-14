@@ -1,4 +1,5 @@
 #include "AS608.h"
+#include "main.h"
 
 #include <cstring>
 
@@ -20,6 +21,7 @@ void sendDataPackage(DataPackage *msg, uint8_t size)
             msgArr[arrIndex++] = getDataPkgElement(msg, i);
     }
 
+    HAL_UART_Transmit(&huart1, &msgArr, size, HAL_MAX_DELAY);
 }
 
 //initializer for fingerprint module
@@ -126,7 +128,11 @@ uint8_t sendHandshake(FingerprintModule *fpModule)
 
     sendDataPackage(&handshkMsg, msgSize);
 
+    uint8_t handshkReply[HANDSHAKE_REPLY_LEN];
 
+    HAL_UART_Receive_IT(&huart1, handshkReply, HANDSHAKE_REPLY_LEN);
 
+    free(msg->data);
 
+    return handshkReply[9];
 }
