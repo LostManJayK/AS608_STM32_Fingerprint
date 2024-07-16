@@ -140,13 +140,21 @@
 #define WRITE_NOTEPAD 0x18 //Write to specified page
 #define READ_NOTEPAD 0x19 //REad from specified page
 
+//Define a custom error struct
+// typedef struct ComError
+// {
+//     char msg[]; //Error message
+//     char op[]; //Attempted operation
+//     uint8_t code; //Confirmation code from sensor
+// }ComError;
+
 
 //Define a data structure for the fingerprint module parameters
 typedef struct FingerprintModule
 {
     uint8_t address[4];
     uint8_t baud_rate;
-    uint8_t security_lev1el;
+    uint8_t security_level;
     uint8_t max_len; //max data package length
 
 }FingerprintModule;
@@ -173,17 +181,17 @@ void fpInit();
 uint8_t getDataPkgElement(DataPackage*, uint8_t);
 
 //Calculates the checksum for the data package
-uint8_t calculateChecksum(DataPackage*);
+void calculateChecksum(DataPackage*);
 
 //Calculate the size in bytes of the data package
 unsigned calculatePkgSize(DataPackage*);
 
 
 //Function for sending package to module
-void sendDataPackage(DataPackage*, uint8_t size);
+void sendDataPackage(DataPackage*, uint8_t size, UART_HandleTypeDef*);
 
 //Function for sending handshake message
-uint8_t sendHandshake(FingerprintModule&);
+uint8_t sendHandshake(FingerprintModule*, UART_HandleTypeDef*, uint8_t[]);
 
 
 #endif

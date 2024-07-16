@@ -1,10 +1,12 @@
+#include "stm32c0xx_hal.h"
+#include "stm32c0xx_hal_uart.h"
 #include "AS608.h"
-#include "main.h"
 
-#include <cstring>
+#include <stdlib.h>
+
 
 //Function for sending package to module
-void sendDataPackage(DataPackage *msg, uint8_t size)
+void sendDataPackage(DataPackage *msg, uint8_t size, UART_HandleTypeDef *huart)
 {
     uint8_t msgArr[size];
     uint8_t arrIndex = 0;
@@ -21,13 +23,13 @@ void sendDataPackage(DataPackage *msg, uint8_t size)
             msgArr[arrIndex++] = getDataPkgElement(msg, i);
     }
 
-    HAL_UART_Transmit(&huart1, &msgArr, size, HAL_MAX_DELAY);
+    HAL_UART_Transmit(huart, &msgArr, size, HAL_MAX_DELAY);
 }
 
 //initializer for fingerprint module
 void fpInit()
 {
-    printf("Attempting connection with fingerprint module...\n\r");
+    //printf("Attempting connection with fingerprint module...\n\r");
 }
 
 //Get DataPackage elements by index
@@ -80,7 +82,7 @@ uint8_t getDataPkgElement(DataPackage *msg, uint8_t index)
 //Calculate the size in bytes of the data package
 unsigned calculatePkgSize(DataPackage* msg)
 {
-    return DATAPKG_BASE_SIZE + (sizeof(msg->data));
+    return DATAPKG_BASE_SIZE + msg->len_data; //(sizeof(msg->data) / sizeof(uint8_t));
 }
 
 //Calculates and adds checksum for data package
@@ -98,7 +100,7 @@ void calculateChecksum(DataPackage *msg)
     sum += msg->instr_code;
 
     //Add package data
-    unsigned dataSize = sizeof(msg->data);
+    unsigned dataSize = msg->len_data;
     for(unsigned i=0U; i<dataSize; i++)
         sum += msg->data[i];
 
@@ -107,8 +109,9 @@ void calculateChecksum(DataPackage *msg)
     msg->checksum[1] = sum & 0xFF;
 }
 
-uint8_t sendHandshake(FingerprintModule *fpModule)
+uint8_t sendHandshake(FingerprintModule *fpModule, UART_HandleTypeDef *huart, uint8_t handshkReply[])
 {
+    //Define data package to be send
     DataPackage handshkMsg = {
         {AS608_INSTR_HEADER},
         {fpModule->address[0], fpModule->address[1], fpModule->address[2], fpModule->address[3]},
@@ -120,19 +123,23 @@ uint8_t sendHandshake(FingerprintModule *fpModule)
         {0x00, 0x00}
     };
 
-    handshkMsg.data = malloc(msg->len_data);
+    //Allocate memory for data and assign data value
+    handshkMsg.data = malloc(handshkMsg.len_data);
     *handshkMsg.data = 0x00;
 
-    calculateChecksum(&handshkMsg); //Calculate checksum and add to data package
+    //Calculate checksum and add to data package
+    calculateChecksum(&handshkMsg);
     unsigned msgSize = calculatePkgSize(&handshkMsg);
 
-    sendDataPackage(&handshkMsg, msgSize);
+    //Send data to fingerprint sensor
+    sendDataPackage(&handshkMsg, msgSize, huart);
 
-    uint8_t handshkReply[HANDSHAKE_REPLY_LEN];
+    //Wait to receive the response message
+    HAL_UART_Receive_IT(huart, handshkReply, HANDSHAKE_REPLY_LEN);
 
-    HAL_UART_Receive_IT(&huart1, handshkReply, HANDSHAKE_REPLY_LEN);
+    //Free memory used for package data
+    free(handshkMsg.data);
 
-    free(msg->data);
-
+    //Return sensor confirmation code
     return handshkReply[9];
 }
