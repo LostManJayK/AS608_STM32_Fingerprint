@@ -1,0 +1,2 @@
+Baud: 9600
+Address: 0xFFFFFF00

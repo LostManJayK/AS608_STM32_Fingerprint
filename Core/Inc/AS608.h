@@ -2,6 +2,7 @@
 #define AS608_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 //Define fingerprint sensor instruction header. This will not change
 #define AS608_INSTR_HEADER 0xEF, 0X01
@@ -68,7 +69,7 @@
 //Define confirmation codes for AS608 acknowledgement packages. Each code is one byte. Refer to the datasheet for additional info
 //----
 
-#define COMPLETE 0x00 //Command execution complete
+#define OP_COMPLETE 0x00 //Command execution complete
 #define REC_ERR 0x01 //Error receiving package
 #define NO_FINGER 0x02 //No fingerprint on sensor
 #define ENROLL_FAIL 0x03//Fail to enroll fingerprint
@@ -131,6 +132,11 @@
 #define HANDSHAKE_DATA_LEN 1
 #define HANDSHAKE_REPLY_LEN 12
 
+//SetAddress
+#define SETADDR_PKG_LEN 0x00, 0x07
+#define SETADDR_DATA_LEN 4
+#define SETADDR_REPLY_LEN 12
+
 //Define data package attribute base size
 #define DATAPKG_BASE_SIZE 12
 
@@ -156,6 +162,9 @@ typedef struct FingerprintModule
     uint8_t baud_rate;
     uint8_t security_level;
     uint8_t max_len; //max data package length
+    bool active;
+    UART_HandleTypeDef* huart;
+    uint8_t* response;
 
 }FingerprintModule;
 
@@ -175,7 +184,7 @@ typedef struct DataPackage
 
 
 //initializer for fingerprint module
-void fpInit();
+void fpInit(FingerprintModule*);
 
 //Get DataPackage elements
 uint8_t getDataPkgElement(DataPackage*, uint8_t);
@@ -191,7 +200,10 @@ unsigned calculatePkgSize(DataPackage*);
 void sendDataPackage(DataPackage*, uint8_t size, UART_HandleTypeDef*);
 
 //Function for sending handshake message
-uint8_t sendHandshake(FingerprintModule*, UART_HandleTypeDef*, uint8_t[]);
+void sendHandshake(FingerprintModule*);
+
+//Function for setting device address
+void setAddress(FingerprintModule*, uint8_t[]);
 
 
 #endif

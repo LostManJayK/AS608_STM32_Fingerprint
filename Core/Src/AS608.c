@@ -27,9 +27,9 @@ void sendDataPackage(DataPackage *msg, uint8_t size, UART_HandleTypeDef *huart)
 }
 
 //initializer for fingerprint module
-void fpInit()
+void fpInit(FingerprintModule *fpModule)
 {
-    //printf("Attempting connection with fingerprint module...\n\r");
+
 }
 
 //Get DataPackage elements by index
@@ -109,7 +109,7 @@ void calculateChecksum(DataPackage *msg)
     msg->checksum[1] = sum & 0xFF;
 }
 
-uint8_t sendHandshake(FingerprintModule *fpModule, UART_HandleTypeDef *huart, uint8_t handshkReply[])
+void sendHandshake(FingerprintModule *fpModule)
 {
     //Define data package to be send
     DataPackage handshkMsg = {
@@ -132,14 +132,110 @@ uint8_t sendHandshake(FingerprintModule *fpModule, UART_HandleTypeDef *huart, ui
     unsigned msgSize = calculatePkgSize(&handshkMsg);
 
     //Send data to fingerprint sensor
-    sendDataPackage(&handshkMsg, msgSize, huart);
+    sendDataPackage(&handshkMsg, msgSize, fpModule->huart);
+
+    //Allocate response memory
+    if(fpModule->response == NULL)
+        fpModule->response = malloc(HANDSHAKE_REPLY_LEN * sizeof(uint8_t));
+    else
+        fpModule->response = realloc(fpModule->response, HANDSHAKE_REPLY_LEN * sizeof(uint8_t));
+    
 
     //Wait to receive the response message
-    HAL_UART_Receive_IT(huart, handshkReply, HANDSHAKE_REPLY_LEN);
+    HAL_UART_Receive(fpModule->huart, fpModule->response, HANDSHAKE_REPLY_LEN, HAL_MAX_DELAY);
+    HAL_Delay(200);
+    //Set to active if handshake response was good
+    if(*(fpModule->response + 9) == OP_COMPLETE)
+    {
+        char handshkConfirm[] = "Handshake OK\r\n";
+        fpModule->active = true;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)handshkConfirm, sizeof(handshkConfirm) / sizeof(char), HAL_MAX_DELAY);
+    }
+    else if(*(fpModule->response + 9) == REC_ERR)
+    {
+        char handshkRecErr[] = "Error Receiving Package\r\n";
+        fpModule->active = false;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)handshkRecErr, sizeof(handshkRecErr) / sizeof(char), HAL_MAX_DELAY);
+    }
+    else
+    {
+        char handshkComErr[] = "Couldn't operate com port\r\n";
+        fpModule->active = false;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)handshkComErr, sizeof(handshkComErr) / sizeof(char), HAL_MAX_DELAY);
+    }
 
     //Free memory used for package data
     free(handshkMsg.data);
+}
 
-    //Return sensor confirmation code
-    return handshkReply[9];
+void setAddress(FingerprintModule *fpModule, uint8_t newAddress[])
+{
+
+    //Replace address in 
+    for(unsigned i=0; i<4; i++)
+        fpModule->address[i] = newAddress[i];
+
+    //Define set address data package instruction
+    DataPackage setAddressMsg = {
+        {AS608_INSTR_HEADER},
+        {fpModule->address[0], fpModule->address[1], fpModule->address[2], fpModule->address[3]},
+        PID_COMMAND, 
+        {0x00, 0x07}, 
+        SET_ADDR,
+        NULL, 
+        SETADDR_DATA_LEN, 
+        {0x00, 0x00}
+    };
+
+    //Allocate memory for array holding new address
+    setAddressMsg.data = malloc(SETADDR_DATA_LEN * sizeof(uint8_t));
+    setAddressMsg.data[0] = newAddress[0];
+    setAddressMsg.data[1] = newAddress[1];
+    setAddressMsg.data[2] = newAddress[2];
+    setAddressMsg.data[3] = newAddress[3];
+    
+
+    //Calculate checksum and add to message
+    calculateChecksum(&setAddressMsg);
+
+    //Calculate package size
+    uint8_t msgSize = calculatePkgSize(&setAddressMsg);
+
+    //Send the data package to the module
+    sendDataPackage(&setAddressMsg, msgSize, fpModule->huart);
+
+    if(fpModule->response == NULL)
+        fpModule->response = malloc(SETADDR_REPLY_LEN * sizeof(uint8_t));
+    else
+        fpModule->response = realloc(fpModule->response, SETADDR_REPLY_LEN * sizeof(uint8_t));
+    
+    //Set dummy value
+    fpModule->response[9] = 0xff;
+
+    //Wait to receive the response message
+    HAL_UART_Receive(fpModule->huart, fpModule->response, SETADDR_REPLY_LEN, HAL_MAX_DELAY);
+    HAL_Delay(200);
+    //Set to active if handshake response was good
+    if(*(fpModule->response + 9) == OP_COMPLETE)
+    {
+        char setAddrConfirm[] = "New Address Set\r\n";
+        fpModule->active = true;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)setAddrConfirm, sizeof(setAddrConfirm) / sizeof(char), HAL_MAX_DELAY);
+    }
+    else if(*(fpModule->response + 9) == REC_ERR)
+    {
+        char setAddrRecErr[] = "Error Receiving Package\r\n";
+        fpModule->active = false;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)setAddrRecErr, sizeof(setAddrRecErr) / sizeof(char), HAL_MAX_DELAY);
+    }
+    else
+    {
+        char setAddrComErr[] = "Couldn't operate com port\r\n";
+        fpModule->active = false;
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)setAddrComErr, sizeof(setAddrComErr) / sizeof(char), HAL_MAX_DELAY);
+    }
+
+    //Free memory allocated for data
+    free(setAddressMsg.data);
+
 }
