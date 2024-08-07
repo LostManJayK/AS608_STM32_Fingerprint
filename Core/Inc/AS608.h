@@ -58,6 +58,8 @@
 //Define package length identifiers. Format is PACLEN_<NUM_BYTES>. This value is a system parameter determining the max allowable data transfer length
 //----
 
+#define PACLEN_PARAM 0x06
+
 #define PACLEN_32 0x00
 #define PACLEN_64 0x01
 #define PACLEN_128 0x02
@@ -105,7 +107,7 @@
 #define HANDSHAKE 0x17 //Handshake to test communication with module
 #define SET_ADDR 0x15 //Set device address
 #define SET_PARAM 0x0E //Set system parameter
-#define GET_PARAM 0x1F //Read system parameter
+#define GET_PARAM 0x0F //Read system parameter
 #define GET_TEMPLATENUM 0x1D //REad current valid template number
 
 //Fingerprint Processing
@@ -137,6 +139,21 @@
 #define SETADDR_DATA_LEN 4
 #define SETADDR_REPLY_LEN 12
 
+//SetSysParam
+#define SETPARAM_PKG_LEN 0x00, 0x05
+#define SETPARAM_DATA_LEN 2
+#define SETPARAM_REPLY_LEN 12
+
+//ReadSysParam
+#define READPARAM_PKG_LEN 0x00, 0x03
+#define READPARAM_DATA_LEN 0
+#define READPARAM_REPLY_LEN 28
+
+//ReadTmpltNum
+#define READTMPLTNUM_PKG_LEN 0x00, 0x03
+#define READTMPLTNUM_DATA_LEN 0
+#define READTMPLTNUM_REPLY_LEN 14
+
 //Define data package attribute base size
 #define DATAPKG_BASE_SIZE 12
 
@@ -165,6 +182,7 @@ typedef struct FingerprintModule
     bool active;
     UART_HandleTypeDef* huart;
     uint8_t* response;
+    uint8_t len_response;
 
 }FingerprintModule;
 
@@ -195,9 +213,12 @@ void calculateChecksum(DataPackage*);
 //Calculate the size in bytes of the data package
 unsigned calculatePkgSize(DataPackage*);
 
+//Determine and transmit responses
+void assessResponse(FingerprintModule*);
+
 
 //Function for sending package to module
-void sendDataPackage(DataPackage*, uint8_t size, UART_HandleTypeDef*);
+void sendDataPackage(DataPackage*, UART_HandleTypeDef*);
 
 //Function for sending handshake message
 void sendHandshake(FingerprintModule*);
@@ -205,5 +226,30 @@ void sendHandshake(FingerprintModule*);
 //Function for setting device address
 void setAddress(FingerprintModule*, uint8_t[]);
 
+//Functions for setting system parameters
+//---
+//---
+
+//General parameter setting functoin
+void setSysParam(FingerprintModule*, uint8_t, uint8_t);
+
+//Set baud rate of the module (Use BAUD_VAL as defined above)
+void setBaudRate(FingerprintModule*, uint8_t);
+
+//Set security level of the module
+void setSecurityLevel(FingerprintModule*, uint8_t);
+
+//Set max data package length (Use PACLEN_VAL as defined)
+void setPacLen(FingerprintModule*, uint8_t);
+
+//---
+//---
+
+
+//Function for accessing system parameters
+void readSysParam(FingerprintModule*);
+
+//Function for reading stored templates in fpModule
+void readTemplateNum(FingerprintModule*);
 
 #endif
