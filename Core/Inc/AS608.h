@@ -154,6 +154,11 @@
 #define READTMPLTNUM_DATA_LEN 0
 #define READTMPLTNUM_REPLY_LEN 14
 
+//GenImg
+#define GENIMG_PKG_LEN 0x00, 0x03
+#define GENIMG_DATA_LEN 0
+#define GENIMG_REPLY_LEN 12
+
 //Define data package attribute base size
 #define DATAPKG_BASE_SIZE 12
 
@@ -177,11 +182,11 @@ typedef struct FingerprintModule
 {
     uint8_t address[4];
     uint8_t baud_rate;
-    uint8_t security_level;
+    uint8_t security_level; //FP matching tolerance (1-5)
     uint8_t max_len; //max data package length
     bool active;
-    UART_HandleTypeDef* huart;
-    uint8_t* response;
+    UART_HandleTypeDef* huart; //UART channel identifier
+    uint8_t* response; //Response of the last operation
     uint8_t len_response;
 
 }FingerprintModule;
@@ -213,8 +218,8 @@ void calculateChecksum(DataPackage*);
 //Calculate the size in bytes of the data package
 unsigned calculatePkgSize(DataPackage*);
 
-//Determine and transmit responses
-void assessResponse(FingerprintModule*);
+//Determine and transmit responses, bool swtich can suppress output
+uint8_t assessResponse(FingerprintModule*, bool, bool);
 
 
 //Function for sending package to module
@@ -227,7 +232,6 @@ void sendHandshake(FingerprintModule*);
 void setAddress(FingerprintModule*, uint8_t[]);
 
 //Functions for setting system parameters
-//---
 //---
 
 //General parameter setting functoin
@@ -243,13 +247,27 @@ void setSecurityLevel(FingerprintModule*, uint8_t);
 void setPacLen(FingerprintModule*, uint8_t);
 
 //---
-//---
 
 
 //Function for accessing system parameters
 void readSysParam(FingerprintModule*);
 
+//Convert hex values to decimal strings (transmit determines whether or not to transmit the result over uart)
+void hexToDecStr(unsigned *val, char buffer[], char result[], UART_HandleTypeDef*, bool transmit);
+
+//Get baud rate
+uint32_t getBaudRate(FingerprintModule*);
+
+//Get security level
+uint8_t getSecurityLvl(FingerprintModule*);
+
+//Get package size
+uint8_t getPacSize(FingerprintModule*);
+
 //Function for reading stored templates in fpModule
-void readTemplateNum(FingerprintModule*);
+uint32_t readTemplateNum(FingerprintModule*);
+
+//Generate fingerprint image
+void generateImage(FingerprintModule*, TIM_HandleTypeDef*, bool*);
 
 #endif

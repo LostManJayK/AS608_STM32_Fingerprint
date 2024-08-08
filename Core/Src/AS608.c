@@ -1,9 +1,11 @@
 #include "stm32c0xx_hal.h"
 #include "stm32c0xx_hal_uart.h"
+#include "stm32c0xx_hal_tim.h"
 #include "AS608.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 //Function for sending package to module
@@ -13,8 +15,8 @@ void sendDataPackage(DataPackage *msg, UART_HandleTypeDef *huart)
     //Calculate checksum
     calculateChecksum(msg);
     
-    //Calculate the package size
-    uint8_t size = calculatePkgSize(msg);
+    //Calculate the package size, add two for terminator characters
+    uint8_t size = calculatePkgSize(msg)+2;
 
     //Create an array for the data package and initialize the index
     uint8_t msgArr[size];
@@ -32,15 +34,12 @@ void sendDataPackage(DataPackage *msg, UART_HandleTypeDef *huart)
             msgArr[arrIndex++] = getDataPkgElement(msg, i);
     }
 
+    //Add null and newline terminators
+    msgArr[arrIndex++] = 0x0DU;
+    msgArr[arrIndex++] = 0x0AU;
+
     HAL_UART_Transmit(huart, msgArr, size, HAL_MAX_DELAY);
 }
-
-// void assessResponse(FingerprintModule *fpModule)
-// {
-//     char responseMsg[];
-
-//     switch(fpModule->resposne + 9)
-// }
 
 //initializer for fingerprint module
 void fpInit(FingerprintModule *fpModule)
@@ -102,7 +101,7 @@ unsigned calculatePkgSize(DataPackage* msg)
 }
 
 //Determine and transmit responses
-void assessResponse(FingerprintModule *fpModule)
+uint8_t assessResponse(FingerprintModule *fpModule, bool transmit, bool receive)
 {
 
     if(fpModule->response == NULL)
@@ -110,91 +109,100 @@ void assessResponse(FingerprintModule *fpModule)
     else
         fpModule->response = realloc(fpModule->response, fpModule->len_response * sizeof(uint8_t));
     
-    //Receive module response
-    HAL_UART_Receive(fpModule->huart, fpModule->response, fpModule->len_response, HAL_MAX_DELAY);
-    HAL_Delay(200);
+    if(receive)
+    {
+        //Receive module response
+        HAL_UART_Receive(fpModule->huart, fpModule->response, fpModule->len_response, HAL_MAX_DELAY);
+        HAL_Delay(5);
+    }
+
 
     //Create confirmation message array
     char confMsg[60];
 
-    //Check response and handle
-    switch(*(fpModule->response + 9))
+    if(transmit)
     {
-        case OP_COMPLETE:
-            strcpy(confMsg, "Operation Complete\r\n");
-            break;
-        case REC_ERR:
-            strcpy(confMsg, "Error receiving package\r\n");
-            break;
-        case NO_FINGER:
-            strcpy(confMsg, "No fingerprint on sensor\r\n");
-            break;
-        case ENROLL_FAIL:
-            strcpy(confMsg, "Failed to enroll fingerprint\r\n");
-            break;
-        case BADIMG_DIS:
-            strcpy(confMsg, "Character file generation fail. Overly-disorderly image\r\n");
-            break;
-        case BADIMG_SMALL:
-            strcpy(confMsg, "Character gile generation faill. Not enough data\r\n");
-            break;
-        case WRONG_FP:
-            strcpy(confMsg, "Fingerprint doesn't match\r\n");
-            break;
-        case NO_MATCH:
-            strcpy(confMsg, "Could not find mathing fingerprint\r\n");
-            break;
-        case COMBINE_FAIL:
-            strcpy(confMsg, "Failed to combine files\r\n");
-            break;
-        case PAGEID_OUT_OF_RANGE:
-            strcpy(confMsg, "Page ID is beyond finger library\r\n");
-            break;
-        case TEMPLATE_READ_ERR:
-            strcpy(confMsg, "Error reading template or template is invalid\r\n");
-            break;
-        case TEMPLATE_UPLOAD_ERR:
-            strcpy(confMsg, "Error uploading template\r\n");
-            break;
-        case REC_UNABLE:
-            strcpy(confMsg, "Unable to read the following packages\r\n");
-            break;
-        case IMG_UPLOAD_ERR:
-            strcpy(confMsg, "Error uploading image\r\n");
-            break;
-        case TEMPLATE_DELETE_FAIL:
-            strcpy(confMsg, "Failed to delete template\r\n");
-            break;
-        case LIB_CLEAR_FAIL:
-            strcpy(confMsg, "Failed to clear fingerprint library\r\n");
-            break;
-        case IMG_GEN_FAIL: 
-            strcpy(confMsg, "Failed to generate img, lack of primary img\r\n");
-            break;
-        case FLASH_WRITE_ERR: 
-            strcpy(confMsg, "Error writing flash memory\r\n");
-            break;
-        case UNDEF_ERR:
-            strcpy(confMsg, "No definition error\r\n");
-            break;
-        case INVALID_REG:
-            strcpy(confMsg, "Invalid register number\r\n");
-            break;
-        case INVALID_REG_CONFIG:
-            strcpy(confMsg, "Incorrect register configuration\r\n");
-            break;
-        case INVALID_PAGE_NUM:
-            strcpy(confMsg, "Wrong page number\r\n");
-            break;
-        case COM_ERR:
-            strcpy(confMsg, "Failed to operate communication port\r\n");
-            break;
-        default:
-            strcpy(confMsg, "Unknown error. Check connections\r\n");
-            break;
-    }
+        //Check response and handle
+        switch(*(fpModule->response + 9))
+        {
+            case OP_COMPLETE:
+                strcpy(confMsg, "Operation Complete\r\n");
+                break;
+            case REC_ERR:
+                strcpy(confMsg, "Error receiving package\r\n");
+                break;
+            case NO_FINGER:
+                strcpy(confMsg, "No fingerprint on sensor\r\n");
+                break;
+            case ENROLL_FAIL:
+                strcpy(confMsg, "Failed to enroll fingerprint\r\n");
+                break;
+            case BADIMG_DIS:
+                strcpy(confMsg, "Character file generation fail. Overly-disorderly image\r\n");
+                break;
+            case BADIMG_SMALL:
+                strcpy(confMsg, "Character gile generation faill. Not enough data\r\n");
+                break;
+            case WRONG_FP:
+                strcpy(confMsg, "Fingerprint doesn't match\r\n");
+                break;
+            case NO_MATCH:
+                strcpy(confMsg, "Could not find mathing fingerprint\r\n");
+                break;
+            case COMBINE_FAIL:
+                strcpy(confMsg, "Failed to combine files\r\n");
+                break;
+            case PAGEID_OUT_OF_RANGE:
+                strcpy(confMsg, "Page ID is beyond finger library\r\n");
+                break;
+            case TEMPLATE_READ_ERR:
+                strcpy(confMsg, "Error reading template or template is invalid\r\n");
+                break;
+            case TEMPLATE_UPLOAD_ERR:
+                strcpy(confMsg, "Error uploading template\r\n");
+                break;
+            case REC_UNABLE:
+                strcpy(confMsg, "Unable to read the following packages\r\n");
+                break;
+            case IMG_UPLOAD_ERR:
+                strcpy(confMsg, "Error uploading image\r\n");
+                break;
+            case TEMPLATE_DELETE_FAIL:
+                strcpy(confMsg, "Failed to delete template\r\n");
+                break;
+            case LIB_CLEAR_FAIL:
+                strcpy(confMsg, "Failed to clear fingerprint library\r\n");
+                break;
+            case IMG_GEN_FAIL: 
+                strcpy(confMsg, "Failed to generate img, lack of primary img\r\n");
+                break;
+            case FLASH_WRITE_ERR: 
+                strcpy(confMsg, "Error writing flash memory\r\n");
+                break;
+            case UNDEF_ERR:
+                strcpy(confMsg, "No definition error\r\n");
+                break;
+            case INVALID_REG:
+                strcpy(confMsg, "Invalid register number\r\n");
+                break;
+            case INVALID_REG_CONFIG:
+                strcpy(confMsg, "Incorrect register configuration\r\n");
+                break;
+            case INVALID_PAGE_NUM:
+                strcpy(confMsg, "Wrong page number\r\n");
+                break;
+            case COM_ERR:
+                strcpy(confMsg, "Failed to operate communication port\r\n");
+                break;
+            default:
+                strcpy(confMsg, "Unknown error. Check connections\r\n");
+                break;
+        }
 
-    HAL_UART_Transmit(fpModule->huart, (uint8_t*)confMsg, sizeof(confMsg) / sizeof(char), HAL_MAX_DELAY);
+        HAL_UART_Transmit(fpModule->huart, (uint8_t*)confMsg, strlen(confMsg), HAL_MAX_DELAY);
+    }
+    
+    return *(fpModule->response + 9);
 }
 
 //Calculates and adds checksum for data package
@@ -246,7 +254,7 @@ void sendHandshake(FingerprintModule *fpModule)
     //Set reply length
     fpModule->len_response = HANDSHAKE_REPLY_LEN;
 
-    assessResponse(fpModule);
+    assessResponse(fpModule, 1, 1);
 
     //Free memory used for package data
     free(handshkMsg.data);
@@ -286,7 +294,7 @@ void setAddress(FingerprintModule *fpModule, uint8_t newAddress[])
     fpModule->len_response = SETADDR_REPLY_LEN;
 
     //Check response
-    assessResponse(fpModule);
+    assessResponse(fpModule, 1, 1);
 
     //Free memory allocated for data
     free(setAddressMsg.data);
@@ -318,7 +326,7 @@ void setSysParam(FingerprintModule *fpModule, uint8_t paramID, uint8_t paramVal)
     fpModule->len_response = SETPARAM_REPLY_LEN;
 
     //Check response
-    assessResponse(fpModule);
+    assessResponse(fpModule, 1, 1);
 
     //Free data package memory
     free(paramMsg.data);
@@ -381,11 +389,85 @@ void readSysParam(FingerprintModule* fpModule)
     fpModule->len_response = READPARAM_REPLY_LEN;
 
     //Check the module response
-    assessResponse(fpModule);
+    assessResponse(fpModule, 1, 1);
+}
+
+//Convert hex values to decimal strings
+void hexToDecStr(unsigned *val, char buffer[], char result[], UART_HandleTypeDef *huart, bool transmit)
+{
+    memset(buffer, 0, sizeof(buffer));
+
+    snprintf(buffer, 15, "%u", *val);
+    strcat(result, buffer);
+    strcat(result, "\r\n");
+
+    //Transmit information
+    if(transmit)
+        HAL_UART_Transmit(huart, (uint8_t*)result, strlen(result), HAL_MAX_DELAY);
+}
+
+//Get baud rate
+uint32_t getBaudRate(FingerprintModule *fpModule)
+{
+    //Read all system parameters
+    readSysParam(fpModule);
+    
+    //Create output header
+    char baudStr[20] = "Baud Rate: ";
+
+    //Get baud rate from response
+    unsigned baudVal =  fpModule->response[10 + 15] * 9600;
+
+    //Convert to decimal string and transmit
+    char decimalBaud[7];
+    hexToDecStr(&baudVal, decimalBaud, baudStr, fpModule->huart, 1);
+
+    //Return baud
+    return baudVal;
+}
+
+//Get security level
+uint8_t getSecurityLvl(FingerprintModule *fpModule)
+{
+    //Read all system parameters
+    readSysParam(fpModule);
+
+    //Create header
+    char secStr[20] = "Security Level: ";
+
+    //Get seclvl info
+    unsigned secCode = fpModule->response[10 + 7];
+
+    //Convert to decimal string
+    char decimalSec[2];
+    hexToDecStr(&secCode, decimalSec, secStr, fpModule->huart, 1);
+
+    //Return seclvl
+    return secCode;
+}
+
+//Get package size
+uint8_t getPacSize(FingerprintModule *fpModule)
+{
+    //Read all system parameters
+    readSysParam(fpModule);
+
+    //Create header
+    char pacStr[20] = "Package Size: ";
+
+    //Get packet size
+    unsigned pacCode = fpModule->response[10 + 13];
+
+    //Convert to decimal string
+    char decimalPac[2];
+    hexToDecStr(&pacCode, decimalPac, pacStr, fpModule->huart, 1);
+
+    //Return package size
+    return pacCode;
 }
 
 //Function for reading stored templates in fpModule
-void readTemplateNum(FingerprintModule *fpModule)
+uint32_t readTemplateNum(FingerprintModule *fpModule)
 {
     DataPackage tmpltMsg = {
         {AS608_INSTR_HEADER},
@@ -405,5 +487,66 @@ void readTemplateNum(FingerprintModule *fpModule)
     fpModule->len_response = READTMPLTNUM_REPLY_LEN;
 
     //Check the mdoule response
-    assessResponse(fpModule);
+    assessResponse(fpModule, 1, 1);
+
+    //Transmit appropriate information from response
+    char tmpltStr[30] = "Template Num: ";
+
+    //Access template number and combine to single integer
+    unsigned tmpltVal = (fpModule->response[10] << 8) + fpModule->response[11];
+
+    //Convert to string, concatenate and broadcast
+    char decimalTmplt[6];
+    hexToDecStr(&tmpltVal, decimalTmplt, tmpltStr, fpModule->huart, 1);
+
+    return tmpltVal;
+}
+
+//Generate fingerprint image
+void generateImage(FingerprintModule *fpModule, TIM_HandleTypeDef *tim, bool *tim16Flag)
+{
+    DataPackage msg = {
+        {AS608_INSTR_HEADER},
+        {fpModule->address[0], fpModule->address[1], fpModule->address[2], fpModule->address[3]},
+        PID_COMMAND,
+        {GENIMG_PKG_LEN},
+        GEN_IMG,
+        NULL,
+        GENIMG_DATA_LEN,
+        {0x00, 0x00}
+    };
+
+    //Set the response length
+    fpModule->len_response = GENIMG_REPLY_LEN;
+
+    //Create a variable for the response code
+    uint8_t scanResponse = 0xFF;
+
+    //Clear interrupt and start the timer
+    __HAL_TIM_CLEAR_FLAG(tim, TIM_FLAG_UPDATE);
+    HAL_TIM_Base_Start_IT(tim);
+
+    //Reset the timer to 0
+    __HAL_TIM_SET_COUNTER(tim, 0);
+
+    //Scan for fingerprint for 3 seconds or until found
+
+    while((!*tim16Flag) && scanResponse != OP_COMPLETE ) //
+    {
+        //Send the data package
+        sendDataPackage(&msg, fpModule->huart);
+
+        //Process the response
+        scanResponse = assessResponse(fpModule, 0, 1);
+    }
+
+    //Perform final assessment of response
+    assessResponse(fpModule, 1, 0);
+
+    //Reset timer flag
+    *tim16Flag = 0;
+
+    //Stop the timer interrupt
+    HAL_TIM_Base_Stop_IT(tim);
+    
 }
